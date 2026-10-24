@@ -16,7 +16,85 @@ public class Escape {
     public record Result(int[] path, int visited, int deadEnds) {}
 
     public static Result escape(Input.Walls w, int[] broken) {
-        // TODO
-        return new Result(new int[0], 0, 0);
+        int n = w.cells();
+        int cols = w.cols();
+        int exit = n - 1;
+        int[][] graph = Graphs.open(w,broken);
+        int deadEnds = 0;
+        for (int i = 0; i < n; i++){
+            if (graph[i].length == 1){
+                deadEnds++;
+            }
+        }
+        boolean[] visited = new boolean[n];
+        int[] parent = new int[n];
+        int[] stack = new int[n];
+        int[] nextDir = new int[n];
+        java.util.Arrays.fill(parent,-1);
+        int top = 0;
+        int visitedCount = 1;
+        stack[0] = 0;
+        visited[0] = true;
+        while(top >= 0 && !visited[exit]){
+            int current = stack[top];
+            if (nextDir[top] == 4)  {
+                top--;
+                continue;
+            }
+            int direction = nextDir[top]++;
+            int next = -1;
+            if (direction == 0 && current >= cols) {
+                next = current - cols;
+            } else if (direction == 1 && current % cols < cols - 1) {
+                next = current + 1;
+            } else if (direction == 2 && current + cols < n) {
+                next = current + cols;
+            } else if (direction == 3 && current % cols > 0) {
+                next = current - 1;
+            }
+
+            if (next == -1 || visited[next]) {
+                continue;
+            }
+
+            boolean open = false;
+
+            for (int neighbor : graph[current]) {
+                if (neighbor == next) {
+                    open = true;
+                    break;
+                }
+            }
+
+            if (!open) {
+                continue;
+            }
+
+            visited[next] = true;
+            visitedCount++;
+            parent[next] = current;
+
+            top++;
+            stack[top] = next;
+            nextDir[top] = 0;
+        }
+
+        int pathLength = 0;
+        int cell = exit;
+
+        while (cell != -1) {
+            pathLength++;
+            cell = parent[cell];
+        }
+
+        int[] path = new int[pathLength];
+        cell = exit;
+
+        for (int i = pathLength - 1; i >= 0; i--) {
+            path[i] = cell;
+            cell = parent[cell];
+        }
+
+        return new Result(path, visitedCount, deadEnds);
     }
 }
