@@ -12,16 +12,90 @@ public class Zones {
      * Mission 4. Kosaraju. Returns zoneOf: zoneOf[cell] = number of the zone, numbers 0 .. zones-1.
      * Number the zones in the order in which the second pass finds them. That order is a topological order
      * of the zone graph: every slide between two zones goes from a smaller number to a larger number.
-     *
+     * <p>
      * Plan: 1) DFS on the slides, write the cells in the order in which they are finished (use a stack, not recursion);
      * 2) go through the cells from the last finished to the first; if a cell has no zone yet, DFS from it on the reversed
      * slides (slidesInto) and give every cell it reaches the next zone number.
      * Is DAG in Main is 1 when the number of zones equals the number of cells (no cycle), so you do not need a separate check.
      */
+
     public static int[] kosaraju(Input.Slides s) {
-        // TODO
-        return new int[s.n()];
+        int n = s.n();
+
+        int[][] from = Graphs.slidesFrom(s);
+        int[][] into = Graphs.slidesInto(s);
+
+        boolean[] visited = new boolean[n];
+        int[] finishOrder = new int[n];
+        int finishCount = 0;
+
+        int[] stack = new int[n];
+        int[] nextEdge = new int[n];
+
+        for (int start = 0; start < n; start++) {
+            if (visited[start]) {
+                continue;
+            }
+
+            int top = 0;
+            stack[0] = start;
+            visited[start] = true;
+
+            while (top >= 0) {
+                int u = stack[top];
+
+                if (nextEdge[top] < from[u].length) {
+                    int edge = from[u][nextEdge[top]++];
+                    int v = s.to()[edge];
+
+                    if (!visited[v]) {
+                        visited[v] = true;
+                        top++;
+                        stack[top] = v;
+                        nextEdge[top] = 0;
+                    }
+                } else {
+                    finishOrder[finishCount++] = u;
+                    top--;
+                }
+            }
+        }
+
+        int[] zoneOf = new int[n];
+        java.util.Arrays.fill(zoneOf, -1);
+
+        int zoneCount = 0;
+
+        for (int i = finishCount - 1; i >= 0; i--) {
+            int start = finishOrder[i];
+
+            if (zoneOf[start] != -1) {
+                continue;
+            }
+
+            int top = 0;
+            stack[0] = start;
+            zoneOf[start] = zoneCount;
+
+            while (top >= 0) {
+                int u = stack[top--];
+
+                for (int edge : into[u]) {
+                    int v = s.from()[edge];
+
+                    if (zoneOf[v] == -1) {
+                        zoneOf[v] = zoneCount;
+                        stack[++top] = v;
+                    }
+                }
+            }
+
+            zoneCount++;
+        }
+
+        return zoneOf;
     }
+
 
     /**
      * Mission 5. The graph of zones: the edge X to Y costs the cheapest slide from X to Y, walking inside a zone is free.
