@@ -6,6 +6,8 @@
  * of the slides that enter cell v (reversed graph). The lists hold slide numbers i; the cell at the other end is s.to()[i]
  * or s.from()[i].
  */
+import java.util.ArrayList;
+import java.util.Arrays;
 public class Zones {
 
     /**
@@ -103,8 +105,60 @@ public class Zones {
      * [0] flow stages: the number of zones on the longest chain of zones;
      * [1] the cost of the cheapest route from the zone of cell 0 to the zone of the last cell.
      */
+
     public static long[] routes(Input.Slides s, int[] zoneOf, int zoneCount) {
-        // TODO
-        return new long[]{0, 0};
+        ArrayList<Integer>[] graph = new ArrayList[zoneCount];
+
+        for (int i = 0; i < zoneCount; i++) {
+            graph[i] = new ArrayList<>();
+        }
+
+        for (int i = 0; i < s.count(); i++) {
+            int from = zoneOf[s.from()[i]];
+            int to = zoneOf[s.to()[i]];
+
+            if (from != to) {
+                graph[from].add(i);
+            }
+        }
+
+        long[] stages = new long[zoneCount];
+        Arrays.fill(stages, 1);
+
+        long[] dist = new long[zoneCount];
+        long INF = Long.MAX_VALUE / 4;
+        Arrays.fill(dist, INF);
+
+        int startZone = zoneOf[0];
+        int exitZone = zoneOf[s.n() - 1];
+
+        dist[startZone] = 0;
+
+        for (int u = 0; u < zoneCount; u++) {
+            for (int edge : graph[u]) {
+                int v = zoneOf[s.to()[edge]];
+                int cost = s.time()[edge];
+
+                stages[v] = Math.max(stages[v], stages[u] + 1);
+
+                if (dist[u] != INF) {
+                    long newDist = dist[u] + cost;
+
+                    if (newDist < dist[v]) {
+                        dist[v] = newDist;
+                    }
+                }
+            }
+        }
+
+        long flowStages = 0;
+
+        for (long stage : stages) {
+            flowStages = Math.max(flowStages, stage);
+        }
+
+        long fastestCost = dist[exitZone];
+
+        return new long[]{flowStages, fastestCost};
     }
 }
