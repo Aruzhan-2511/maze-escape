@@ -1,4 +1,4 @@
-/**
+    /**
  * Checks of Mission 0. Run:  java -cp out DisjointSetTest
  * Add your own checks below: a large chain, a union of a set with itself, count after many unions.
  */
@@ -24,7 +24,14 @@ public class DisjointSetTest {
         check(d.count() == 3, "3 sets: {0,1,2,3} {4} {5}");
         check(d.find(4) == 4 && d.find(5) == 5, "a single cell is its own root");
 
-        // TODO: add your own checks here
+        DisjointSet large = new DisjointSet(100);
+        for (int i = 0; i < 99; i++){
+            large.union(i, i+1);
+        }
+        check(large.connected(0,99),"Large chain is connected");
+        check(large.count() == 1, "one set after many unions");
+        check(!large.union(50,50),"union with itself returns false");
+        check(large.count() == 1, "count stays 1 after repeated union");
 
         System.out.println(failed == 0 ? "All checks passed." : failed + " checks failed.");
     }
